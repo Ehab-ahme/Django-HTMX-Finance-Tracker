@@ -1,0 +1,50 @@
+{% load widget_tweaks %}
+
+<!-- Grid container div -->
+<div class="flex flex-col-reverse md:grid md:grid-cols-4 md:gap-4"
+    id="charts-container">
+
+    <!-- 3/4 cols for the table of Transactions, 1/4 for filter -->
+    <div class="col-span-3">
+        {{ income_expense_barchar|safe }}
+
+        <div class="grid grid-cols-2">
+            {{ category_income_pie|safe }}
+            {{ category_expense_pie|safe }}
+        </div>
+    </div>
+        
+    <!--  3/4 cols for the form  -->
+    <div class="col-span-1">
+        <form   hx-get="{% url 'transactions-charts' %}" 
+                hx-target="#charts-container"
+                hx-swap="outerHTML"
+                hx-indicator="#bars"
+                id="filterform">
+
+            <div class="form-control mb-2">
+                {{ filter.form.transaction_type|add_label_class:"label text-white" }}
+                {% render_field filter.form.transaction_type class="select bg-gray-100 text-gray-900" %}  
+            </div>
+
+            <div class="form-control mb-2">
+                {{ filter.form.start_date|add_label_class:"Date From" }}
+                {% render_field filter.form.start_date class="input bg-gray-100 text-gray-900" %}
+            </div>
+
+            <div class="form-control mb-2">
+                {{ filter.form.end_date|add_label_class:"Date To" }}
+                {% render_field filter.form.end_date class="input bg-gray-100 text-gray-900" %}
+            </div>
+
+            <div class="form-control mb-4">
+                {% render_field filter.form.category class="text-green-500 border-gray-300 rounded focus:ring-green-500" %}
+            </div>
+
+            <button class="btn btn-success mb-2">
+                Filter
+            </button>
+        </form>
+        <span id="bars" class="loading loading-bars loading-xl htmx-indicator"></span>
+    </div>
+</div>
