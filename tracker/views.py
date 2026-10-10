@@ -10,6 +10,7 @@ from .forms import TransactionForm
 from .charting import plot_income_expenses_bar_char, plot_category_pie_chart
 from .resources import TransactionResource
 from django.http import HttpResponse
+from tablib import Dataset
 
 # Create your views here.
 def index(request):
@@ -84,8 +85,8 @@ def update_transaction(request, pk):
 def delete_transaction(request, pk):
     transaction= get_object_or_404(Transaction, pk= pk, user= request.user)
     transaction.delete()
-    context= {
-        "message": f"Transaction of {transaction.amount} on {transaction.date} was deleted successfully!"
+    context = {
+        'message': f"Transaction of {transaction.amount} on {transaction.date} was deleted successfully!"
     }
     return render(request, 'tracker/partials/transaction-success.html', context)
 
@@ -148,3 +149,24 @@ def export(request):
     response= HttpResponse(data.csv)
     response['Content-Disposition']= 'attachment; filename="transactions.csv"'
     return response
+
+@login_required
+def import_transactions(request):
+    if request.method == 'POST':
+        file= request.FILES.get('file')
+        resource = TransactionResource()
+        dataset = Dataset()
+        dataset.load(file.read().decode(), format='csv')
+        result = resource.import_data(dataset, user= request.user, dry_run=True)
+        
+        for row in result:
+            for error in row.errors:
+                print(error)
+        
+        if not result.has_errors():
+            resource.import_data(dataset, user= request.user, dry_run=False)
+            context = {'message': f'{len(dataset)} transactions were uploaded successfully'}
+        else:
+            context = {'message': 'Sorry, an error occured.'}
+        return render(request, 'tracker/partials/transaction -success.html', context)
+    return render(request, 'tracker/partials/import-transaction.html')
